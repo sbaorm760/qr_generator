@@ -355,8 +355,8 @@
           <small>by SM Graphics</small>
         </div>
         <div class="logo-wrapper">
+          <!-- [logo SVG code unchanged] -->
           <svg class="logo-svg" viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
-            <!-- logo SVG code ... -->
             <defs>
               <style type="text/css"><![CDATA[
                 .fil0 {fill:#00A0E3}
@@ -367,6 +367,7 @@
                 .fil5 {fill:#EF7F1A;fill-rule:nonzero}
               ]]></style>
             </defs>
+            <!-- ... rest of SVG as before ... -->
             <g id="Layer_x0020_1">
               <metadata id="CorelCorpID_0Corel-Layer"/>
               <g id="_2553399560400">
@@ -425,7 +426,31 @@
     </div>
   </div>
   <script>
-    let downloadCounter = 0;
+    // ===================
+    // CounterAPI settings
+    // ===================
+    const COUNTER_ENDPOINT = 'https://api.counterapi.dev/v2/qr-downloads/qr-download-counter';
+    function updateDownloadCount() {
+      fetch(COUNTER_ENDPOINT)
+        .then(r => r.json())
+        .then(data => {
+          document.getElementById("downloadCount").innerText = "Downloads: " + (data.value || 0);
+        })
+        .catch(() => {
+          document.getElementById("downloadCount").innerText = "Downloads: ?";
+        });
+    }
+    function addDownloadCount() {
+      fetch(COUNTER_ENDPOINT + '/increment', {method: "POST"})
+        .then(r => r.json())
+        .then(data => {
+          document.getElementById("downloadCount").innerText = "Downloads: " + (data.value || 0);
+        })
+        .catch(() => {
+          document.getElementById("downloadCount").innerText = "Downloads: ?";
+        });
+    }
+    // ===== QR & App logic (unchanged) =====
     let lastSvgTag = '';
     let lastDataUrl = '';
     function detectLang(input) {
@@ -484,7 +509,6 @@
       let previewSvg = svgTag.replace(/(width|height)="[^"]*"/g, '');
       qrPreview.innerHTML = `<div class="preview-inner">${previewSvg}</div>`;
       lastDataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgTag);
-
       const img = new Image();
       img.onload = function() {
         const canvas = document.createElement('canvas');
@@ -502,14 +526,16 @@
       };
       img.src = lastDataUrl;
     }
-    window.onload = function() { generateQR(); };
+    window.onload = function() {
+      updateDownloadCount();
+      generateQR();
+    };
     function downloadQR(type) {
       if (!lastSvgTag) {
         alert("Please enter some text or a link first!");
         return;
       }
-      downloadCounter++;
-      document.getElementById("downloadCount").innerText = "Downloads: " + downloadCounter;
+      addDownloadCount(); // CounterAPI +1
       if (type === 'svg') {
         const link = document.createElement('a');
         link.download = 'qrcode.svg';
